@@ -1,0 +1,30 @@
+macro(soprano_add_storage_definition _sources _spec _filename _classname)
+    set(ARGS
+        ${_spec}
+        ${CMAKE_CURRENT_BINARY_DIR}/${_filename}.h
+        ${CMAKE_CURRENT_BINARY_DIR}/${_filename}.cpp
+        ${_classname})
+
+    if (NOT TARGET soprano-storage-tool)
+        find_package(Qt4 REQUIRED QtCore)
+        include(${QT_USE_FILE})
+        include_directories(${QT_INCLUDES})
+        add_definitions(${QT_DEFINITIONS})
+        add_executable(soprano-storage-tool @INSTALL_SOURCES_DIR@/sopranostoragetool.cpp)
+        target_link_libraries(soprano-storage-tool ${QT_LIBRARIES})
+    endif (NOT TARGET soprano-storage-tool)
+
+    add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_filename}.h ${CMAKE_CURRENT_BINARY_DIR}/${_filename}.cpp
+        COMMAND soprano-storage-tool
+        ARGS ${ARGS}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        MAIN_DEPENDENCY ${_spec}
+        DEPENDS soprano-storage-tool)
+    add_custom_target(generate_soprano-storage-definition-${_classname} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${_filename}.h ${CMAKE_CURRENT_BINARY_DIR}/${_filename}.cpp)
+
+    qt4_generate_moc(${CMAKE_CURRENT_BINARY_DIR}/${_filename}.h ${CMAKE_CURRENT_BINARY_DIR}/moc_${_filename}.cpp)
+
+    set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/${_filename}.h ${CMAKE_CURRENT_BINARY_DIR}/${_filename}.cpp PROPERTIES SKIP_AUTOMOC TRUE)
+
+    list(APPEND ${_sources} ${CMAKE_CURRENT_BINARY_DIR}/${_filename}.cpp ${CMAKE_CURRENT_BINARY_DIR}/moc_${_filename}.cpp)
+endmacro(soprano_add_storage_definition)
